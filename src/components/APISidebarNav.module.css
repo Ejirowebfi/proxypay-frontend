@@ -60,6 +60,10 @@
   font-weight: 600;
   color: var(--ifm-font-color-base);
   transition: all 0.2s ease;
+  /* Fix #357: keep tag group headers visible while the endpoint list scrolls. */
+  position: sticky;
+  top: 0;
+  z-index: 3;
 }
 
 .tagHeader:hover {
@@ -99,6 +103,11 @@
   padding: 0.75rem;
   background: var(--ifm-background-surface-primary);
   border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  /* Fix #357: the per-tag search box stays pinned below its (sticky) tag
+     header so users never have to scroll back up to search again. */
+  position: sticky;
+  top: 2.75rem;
+  z-index: 2;
 }
 
 .tagSearch {
