@@ -150,9 +150,7 @@ export default function APISidebarNav({
       newSet.add(tag);
     }
     setLocalExpandedTags(newSet);
-    if (onTagToggle) {
-      onTagToggle(tag);
-    }
+    onTagToggle?.(tag);
   };
 
   /**
@@ -164,9 +162,7 @@ export default function APISidebarNav({
    */
   const handleEndpointClick = (endpoint: ParsedEndpoint) => {
     setSelectedEndpointId(endpoint.id);
-    if (onEndpointClick) {
-      onEndpointClick(endpoint);
-    }
+    onEndpointClick?.(endpoint);
     if (enableDeepLinking) {
       window.location.hash = toEndpointLink(endpoint.id);
     }
@@ -209,9 +205,7 @@ export default function APISidebarNav({
     if (!localExpandedTags.has(tag)) {
       handleTagToggle(tag);
     }
-    if (onTagClick) {
-      onTagClick(tag);
-    }
+    onTagClick?.(tag);
     if (enableDeepLinking) {
       window.location.hash = toTagLink(tag);
     }

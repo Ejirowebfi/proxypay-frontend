@@ -35,15 +35,13 @@ export const Toast: React.FC<ToastProps> = ({ messages, onDismiss }) => {
             {toast.type === 'warning' && <span className={styles.toastIcon}>⚠</span>}
             <span className={styles.toastMessage}>{toast.message}</span>
           </div>
-          {onDismiss && (
-            <button
-              className={styles.toastClose}
-              onClick={() => onDismiss(toast.id)}
-              aria-label="Close notification"
-            >
-              ×
-            </button>
-          )}
+          <button
+            className={styles.toastClose}
+            onClick={() => onDismiss?.(toast.id)}
+            aria-label="Close notification"
+          >
+            ×
+          </button>
         </div>
       ))}
     </div>

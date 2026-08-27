@@ -79,9 +79,7 @@ export default function RedocViewer({
     if (spec) {
       setLoadedSpec(spec);
       setLoading(false);
-      if (onSpecLoaded) {
-        onSpecLoaded(spec);
-      }
+      onSpecLoaded?.(spec);
       return;
     }
 
@@ -107,15 +105,11 @@ export default function RedocViewer({
         }
 
         setLoadedSpec(specData);
-        if (onSpecLoaded) {
-          onSpecLoaded(specData);
-        }
+        onSpecLoaded?.(specData);
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error.message);
-        if (onError) {
-          onError(error);
-        }
+        onError?.(error);
         console.error('Failed to load OpenAPI spec:', error);
       } finally {
         setLoading(false);
@@ -145,7 +139,7 @@ export default function RedocViewer({
           const el = container.querySelector(selector) as HTMLElement | null;
           if (el) {
             scrollIntoView(el);
-            if (onDeepLinkNavigate) onDeepLinkNavigate(elementId);
+            onDeepLinkNavigate?.(elementId);
             return true;
           }
         } catch {
@@ -175,7 +169,7 @@ export default function RedocViewer({
       const anchor = document.getElementById(elementId) || document.getElementById(slugId);
       if (anchor) {
         scrollIntoView(anchor);
-        if (onDeepLinkNavigate) onDeepLinkNavigate(elementId);
+        onDeepLinkNavigate?.(elementId);
       }
     },
     [enableDeepLinking, onDeepLinkNavigate],
