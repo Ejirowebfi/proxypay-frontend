@@ -22,6 +22,12 @@ export interface ExportOptions {
   filters?: FilterMetadata;
 }
 
+export interface BatchExportItem {
+  analytics: AnalyticsResult;
+  filters?: FilterMetadata;
+  filename?: string;
+}
+
 export class ReportGenerator {
   /**
    * Generate JSON report with filter metadata
@@ -163,6 +169,24 @@ export class ReportGenerator {
 
     const filename = options.filename || `logs-report-${new Date().getTime()}.${extension}`;
     const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  static async exportBatch(items: BatchExportItem[], filename = `logs-analytics-batch-${new Date().toISOString().slice(0, 10)}.zip`): Promise<void> {
+    if (items.length === 0) throw new Error('Select at least one date range to export');
+    const JSZip = (await import('jszip')).default;
+    const zip = new JSZip();
+    items.forEach((item, index) => {
+      const date = item.filters?.startDate || `range-${index + 1}`;
+      const name = item.filename || `logs-analytics-${date}.json`;
+      zip.file(name, this.generateJsonReport(item.analytics, item.filters));
+    });
+    const blob = await zip.generateAsync({ type: 'blob' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;

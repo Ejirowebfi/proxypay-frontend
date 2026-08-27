@@ -248,7 +248,7 @@ function verifyWebhook(req) {
 ];
 
 // ── Styles ─────────────────────────────────────────────────────────
-const styles: Record<string, React.CSSProperties> = {
+const styles: Record<string, any> = {
   container: {
     maxWidth: 1100,
     margin: '0 auto',
@@ -455,6 +455,32 @@ const styles: Record<string, React.CSSProperties> = {
 const isDeprecated = (d: EndpointDiff): boolean =>
   d.severity === 'deprecation' || d.sunsetStatus === 'deprecated';
 
+function downloadArtifact(filename: string, content: string, type: string): void {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export function generatePostmanCollection(): string {
+  return JSON.stringify({
+    info: { name: 'ProxyPay Migration Validation', schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json' },
+    variable: [{ key: 'baseUrl', value: 'https://api.proxypay.dev' }, { key: 'apiKey', value: 'pp_live_xxxxxxxxxxxxxxxx' }],
+    item: MIGRATION_DATA.flatMap((migration) => migration.diffs.map((diff) => ({
+      name: `${diff.method} ${diff.path}`,
+      request: { method: diff.method === 'ALL' ? 'GET' : diff.method, header: [{ key: 'X-API-Key', value: '{{apiKey}}' }], url: { raw: `{{baseUrl}}${diff.path}`, host: ['{{baseUrl}}'], path: diff.path.split('/').filter(Boolean) } },
+      event: [{ listen: 'test', script: { exec: [`pm.test("${migration.to} ${diff.path} responds", function () {`, '  pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 404]);', '});'] } }],
+    }))),
+  }, null, 2);
+}
+
+export function generateMigrationTestSuite(): string {
+  const paths = MIGRATION_DATA.flatMap((migration) => migration.diffs.map((diff) => `  { method: '${diff.method === 'ALL' ? 'GET' : diff.method}', path: '${diff.path}' },`)).join('\n');
+  return `const cases = [\n${paths}\n];\n\n(async () => {\n  const failures = [];\n  for (const testCase of cases) {\n    const response = await fetch(process.env.PROXYPAY_BASE_URL + testCase.path, { method: testCase.method, headers: { 'X-API-Key': process.env.PROXYPAY_API_KEY } });\n    if (!response.ok && ![400, 401, 404].includes(response.status)) failures.push(testCase);\n    console.log(testCase.method, testCase.path, response.status);\n  }\n  if (failures.length) process.exitCode = 1;\n})();\n`;
+}
+
 export default function MigrationGuide(): React.JSX.Element {
   const [expandedMigration, setExpandedMigration] = useState<string | null>(MIGRATION_DATA[0]?.to || null);
   const [expandedDiffs, setExpandedDiffs] = useState<Set<string>>(new Set());
@@ -505,6 +531,14 @@ export default function MigrationGuide(): React.JSX.Element {
           <strong style={{ color: '#92400e' }}>{deprecationCount} deprecations</strong>,{' '}
           <strong style={{ color: '#1e40af' }}>{additionCount} additions</strong>.
         </p>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button type="button" style={styles.toggleBtn} onClick={() => downloadArtifact('proxypay-migration.postman_collection.json', generatePostmanCollection(), 'application/json')}>
+            Download Postman collection
+          </button>
+          <button type="button" style={styles.toggleBtn} onClick={() => downloadArtifact('proxypay-migration-validation.js', generateMigrationTestSuite(), 'text/javascript')}>
+            Download validation test suite
+          </button>
+        </div>
       </div>
 
       {/* Deprecation banner — shown whenever any deprecated change exists */}
