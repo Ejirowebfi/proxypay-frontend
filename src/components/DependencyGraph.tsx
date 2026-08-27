@@ -23,6 +23,9 @@ interface DependencyGraph {
   edges: GraphEdge[];
 }
 
+export const GRAPH_LABEL_FONT_SIZE = 14;
+export const GRAPH_LABEL_COLOR = '#172033';
+
 // ── Mock Data ──────────────────────────────────────────────────────
 const DEPENDENCY_GRAPH: DependencyGraph = {
   nodes: [
@@ -692,7 +695,6 @@ export default function DependencyGraphViewer(): React.JSX.Element {
                     fill={isSelected ? color : '#fff'}
                     stroke={color}
                     strokeWidth={isSelected ? 3 : node.critical ? 2 : 1.5}
-                    transition="all 0.2s"
                   />
                   {/* Method badge */}
                   <rect
@@ -708,7 +710,7 @@ export default function DependencyGraphViewer(): React.JSX.Element {
                     x={node.x - 62}
                     y={node.y + 2}
                     textAnchor="middle"
-                    fontSize={9}
+                    fontSize={12}
                     fontWeight={700}
                     fill={color}
                   >
@@ -719,9 +721,9 @@ export default function DependencyGraphViewer(): React.JSX.Element {
                     x={node.x - 42}
                     y={node.y + 3}
                     textAnchor="start"
-                    fontSize={11}
+                    fontSize={14}
                     fontWeight={600}
-                    fill={isSelected ? '#fff' : '#1e293b'}
+                    fill={isSelected ? '#fff' : '#172033'}
                   >
                     {node.label.length > 20 ? node.label.slice(0, 19) + '…' : node.label}
                   </text>

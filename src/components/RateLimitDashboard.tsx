@@ -11,6 +11,38 @@ interface RateLimitStatus {
   resetTimestamp: number;
   percentageUsed: number;
   endpoints: EndpointUsage[];
+  usageHistory?: UsageHistoryPoint[];
+}
+
+export interface UsageHistoryPoint {
+  timestamp: number;
+  requestsUsed: number;
+}
+
+export interface UsageForecast {
+  requestsPerHour: number;
+  hoursUntilLimit: number | null;
+  projectedAtLimit: number | null;
+}
+
+export function calculateUsageForecast(
+  history: UsageHistoryPoint[],
+  limit: number,
+  now = Date.now(),
+): UsageForecast {
+  if (history.length < 2) return { requestsPerHour: 0, hoursUntilLimit: null, projectedAtLimit: null };
+  const ordered = [...history].sort((a, b) => a.timestamp - b.timestamp);
+  const first = ordered[0];
+  const last = ordered[ordered.length - 1];
+  const hours = (last.timestamp - first.timestamp) / 3600000;
+  const requestsPerHour = hours > 0 ? Math.max(0, (last.requestsUsed - first.requestsUsed) / hours) : 0;
+  const remaining = Math.max(0, limit - last.requestsUsed);
+  const hoursUntilLimit = requestsPerHour > 0 ? remaining / requestsPerHour : null;
+  return {
+    requestsPerHour: Math.round(requestsPerHour),
+    hoursUntilLimit,
+    projectedAtLimit: hoursUntilLimit === null ? null : now + hoursUntilLimit * 3600000,
+  };
 }
 
 interface EndpointUsage {
@@ -45,6 +77,10 @@ function generateMockStatus(): RateLimitStatus {
   const limit = 5000;
   const used = Math.floor(Math.random() * (limit * 0.85));
   const remaining = limit - used;
+  const usageHistory = Array.from({ length: 8 }, (_, index) => ({
+    timestamp: now - (7 - index) * 3600000,
+    requestsUsed: Math.max(0, used - (7 - index) * Math.max(1, Math.round(used * 0.025))),
+  }));
 
   return {
     tier: 'Pro',
@@ -86,6 +122,7 @@ function generateMockStatus(): RateLimitStatus {
         limit: 250,
       },
     ],
+    usageHistory,
   };
 }
 
@@ -109,7 +146,7 @@ function getTimeRemaining(resetTimestamp: number): string {
   return `${minutes}m`;
 }
 
-function formatDate(date: string | Date): string {
+function formatDate(date: string | number | Date): string {
   const d = new Date(date);
   return d.toLocaleString(undefined, {
     month: 'short',
@@ -440,6 +477,26 @@ export default function RateLimitDashboard(): React.JSX.Element {
               </table>
             </div>
           </div>
+
+          {(() => {
+            const forecast = calculateUsageForecast(status.usageHistory ?? [], status.requestsLimit);
+            return (
+              <div className="rate-limit-forecast-section" data-testid="rate-limit-forecast">
+                <h3>Usage Forecast</h3>
+                <p className="rate-limit-forecast-summary">
+                  Current trend: <strong>{forecast.requestsPerHour.toLocaleString()} requests/hour</strong>
+                  {forecast.hoursUntilLimit === null
+                    ? '. No increasing trend detected.'
+                    : ` . Limit projected in ${forecast.hoursUntilLimit.toFixed(1)} hours (${formatDate(forecast.projectedAtLimit!)})`}
+                </p>
+                <ul className="rate-limit-tips">
+                  <li>Prefer webhooks and cached responses for repeated reads.</li>
+                  <li>Batch compatible operations to reduce request volume.</li>
+                  <li>Use exponential backoff when usage approaches the limit.</li>
+                </ul>
+              </div>
+            );
+          })()}
 
           {/* Help Section */}
           <div className="rate-limit-help-section">
