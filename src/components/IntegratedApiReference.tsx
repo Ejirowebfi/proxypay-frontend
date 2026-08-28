@@ -10,7 +10,14 @@ import APISidebarNav from './APISidebarNav';
 import EndpointComparison from './EndpointComparison';
 import { parseEndpoints, groupByTag, type OpenAPISpec, type ParsedEndpoint, type TagGroup } from '../utils/apiSpecParser';
 import { parseDeepLink, toEndpointLink } from '../utils/redocDeepLink';
+import {
+  addSearchTerm,
+  getSearchSuggestions,
+  loadSearchHistory,
+} from '../utils/searchHistory';
 import styles from './ApiReference.module.css';
+
+const SEARCH_HISTORY_DATALIST_ID = 'api-reference-search-history';
 
 export interface IntegratedApiReferenceProps {
   specUrl?: string;
@@ -60,6 +67,10 @@ export default function IntegratedApiReference({
 }: IntegratedApiReferenceProps): React.JSX.Element {
   const [loadedSpec, setLoadedSpec] = useState<OpenAPISpec | undefined>(spec);
   const [searchQuery, setSearchQuery] = useState('');
+  // Fix #358: persisted recent searches, shown as autocomplete suggestions.
+  const [searchHistory, setSearchHistory] = useState<string[]>(() =>
+    loadSearchHistory(),
+  );
   const [selectedEndpointId, setSelectedEndpointId] = useState<string | undefined>();
   const [expandedTags, setExpandedTags] = useState<Set<string>>(new Set());
   const [comparisonMode, setComparisonMode] = useState(false);
@@ -88,6 +99,22 @@ export default function IntegratedApiReference({
   const filteredEndpoints = useMemo(() => {
     return filterEndpointsBySearch(endpoints, searchQuery);
   }, [endpoints, searchQuery]);
+
+  /**
+   * Autocomplete suggestions drawn from persisted search history.
+   */
+  const searchSuggestions = useMemo(
+    () => getSearchSuggestions(searchQuery, searchHistory),
+    [searchQuery, searchHistory],
+  );
+
+  /**
+   * Commit the current query to history (on Enter or blur).
+   */
+  const commitSearchTerm = useCallback((term: string) => {
+    if (!term.trim()) return;
+    setSearchHistory(addSearchTerm(term));
+  }, []);
 
   /**
    * Handle spec loaded
@@ -221,10 +248,20 @@ export default function IntegratedApiReference({
           type="search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commitSearchTerm(searchQuery);
+          }}
+          onBlur={() => commitSearchTerm(searchQuery)}
+          list={SEARCH_HISTORY_DATALIST_ID}
           placeholder="Search endpoints by path, method, or tag..."
           aria-label="Search API endpoints"
           className={styles.searchInput}
         />
+        <datalist id={SEARCH_HISTORY_DATALIST_ID}>
+          {searchSuggestions.map((term) => (
+            <option key={term} value={term} />
+          ))}
+        </datalist>
         <span className={styles.searchCount}>
           {filteredEndpoints.length} / {endpoints.length} endpoints
         </span>
