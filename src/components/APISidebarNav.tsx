@@ -274,9 +274,9 @@ export default function APISidebarNav({
   };
 
   return (
-    <nav className={styles.container}>
+    <nav className={styles.container} aria-label="API endpoint navigation">
       {quickSearchOpen && (
-        <div className={styles.quickSearchOverlay} role="dialog" aria-label="Quick endpoint search">
+        <div className={styles.quickSearchOverlay} role="dialog" aria-modal="true" aria-label="Quick endpoint search">
           <div className={styles.quickSearch}>
             <input
               autoFocus
@@ -286,8 +286,10 @@ export default function APISidebarNav({
               onChange={(event) => setQuickSearch(event.target.value)}
               onKeyDown={handleQuickSearchKeyDown}
               aria-label="Search endpoints"
+              aria-controls="quick-search-results"
+              aria-autocomplete="list"
             />
-            <div role="listbox" aria-label="Search results">
+            <div id="quick-search-results" role="listbox" aria-label="Search results">
               {quickSearchResults.slice(0, 8).map((endpoint, index) => (
                 <button
                   key={endpoint.id}
@@ -325,9 +327,19 @@ export default function APISidebarNav({
             <div key={group.name} className={styles.tagGroup}>
               {/* Tag Header */}
               <button
+                type="button"
+                role="button"
                 className={styles.tagHeader}
                 onClick={() => handleTagClick(group.name)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleTagClick(group.name);
+                  }
+                }}
                 aria-expanded={localExpandedTags.has(group.name)}
+                aria-controls={`tag-endpoints-${group.name}`}
+                aria-label={`${group.name} — ${group.endpoints.length} endpoint${group.endpoints.length !== 1 ? 's' : ''}, ${localExpandedTags.has(group.name) ? 'collapse' : 'expand'}`}
                 data-tag-name={group.name}
               >
                 <span className={styles.tagToggle}>
@@ -359,10 +371,11 @@ export default function APISidebarNav({
                   />
                   
                   {/* Method Filter Buttons */}
-                  <div className={styles.methodFilters}>
+                  <div className={styles.methodFilters} role="group" aria-label={`Filter ${group.name} endpoints by HTTP method`}>
                     {['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map((method) => (
                       <button
                         key={method}
+                        type="button"
                         className={`${styles.methodFilter} ${
                           methodFilter.has(method.toLowerCase()) ? styles.active : ''
                         }`}
@@ -378,7 +391,7 @@ export default function APISidebarNav({
                             [tagKey]: newFilter,
                           }));
                         }}
-                        title={`Filter by ${method}`}
+                        aria-label={`${methodFilter.has(method.toLowerCase()) ? 'Remove' : 'Add'} ${method} filter`}
                         aria-pressed={methodFilter.has(method.toLowerCase())}
                       >
                         {method}
@@ -390,16 +403,25 @@ export default function APISidebarNav({
 
               {/* Endpoints List */}
               {localExpandedTags.has(group.name) && (
-                <div className={styles.endpointsList}>
+                <div id={`tag-endpoints-${group.name}`} className={styles.endpointsList} role="list">
                   {filteredEndpoints.length > 0 ? (
                     filteredEndpoints.map((endpoint) => (
                       <button
                         key={endpoint.id}
+                        type="button"
                         className={`${styles.endpointItem} ${
                           selectedEndpointId === endpoint.id ? styles.selected : ''
                         }`}
                         onClick={() => handleEndpointClick(endpoint)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleEndpointClick(endpoint);
+                          }
+                        }}
                         title={endpoint.summary}
+                        aria-label={`${endpoint.method.toUpperCase()} ${endpoint.path}${endpoint.summary ? ` — ${endpoint.summary}` : ''}`}
+                        aria-current={selectedEndpointId === endpoint.id ? 'page' : undefined}
                         data-endpoint-id={endpoint.id}
                       >
                         <MethodBadge method={endpoint.method} />
@@ -407,7 +429,7 @@ export default function APISidebarNav({
                       </button>
                     ))
                   ) : (
-                    <div className={styles.noResults}>No endpoints match</div>
+                    <div className={styles.noResults} role="status">No endpoints match</div>
                   )}
                 </div>
               )}
