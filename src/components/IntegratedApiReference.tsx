@@ -95,9 +95,7 @@ export default function IntegratedApiReference({
   const handleSpecLoaded = useCallback(
     (loadedSpec: OpenAPISpec) => {
       setLoadedSpec(loadedSpec);
-      if (onSpecLoaded) {
-        onSpecLoaded(loadedSpec);
-      }
+      onSpecLoaded?.(loadedSpec);
 
       // Initialize expanded tags from deep-link if present
       if (enableDeepLinking && window.location.hash) {

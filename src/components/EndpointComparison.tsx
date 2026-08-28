@@ -124,11 +124,13 @@ export const EndpointComparison: React.FC<EndpointComparisonProps> = ({
       {/* Header */}
       <div className={styles.header}>
         <h2 className={styles.title}>Endpoint Comparison</h2>
-        {onClose && (
-          <button className={styles.closeButton} onClick={onClose} aria-label="Close comparison">
-            ×
-          </button>
-        )}
+        <button 
+          className={styles.closeButton} 
+          onClick={() => onClose?.()}
+          aria-label="Close comparison"
+        >
+          ×
+        </button>
       </div>
 
       {/* Comparison Grid */}
@@ -140,16 +142,14 @@ export const EndpointComparison: React.FC<EndpointComparisonProps> = ({
             <span className={`${styles.methodBadge} ${styles[endpoint1.method.toLowerCase()]}`}>
               {endpoint1.method.toUpperCase()}
             </span>
-            {onSelect && (
-              <button
-                className={styles.selectButton}
-                onClick={() => onSelect(endpoint1)}
-                title="Select this endpoint"
-                aria-label={`Select ${endpoint1.method} ${endpoint1.path}`}
-              >
-                →
-              </button>
-            )}
+            <button
+              className={styles.selectButton}
+              onClick={() => onSelect?.(endpoint1)}
+              title="Select this endpoint"
+              aria-label={`Select ${endpoint1.method} ${endpoint1.path}`}
+            >
+              →
+            </button>
           </div>
         </div>
         <div className={`${styles.columnHeader} ${styles.column2}`}>
@@ -157,16 +157,14 @@ export const EndpointComparison: React.FC<EndpointComparisonProps> = ({
             <span className={`${styles.methodBadge} ${styles[endpoint2.method.toLowerCase()]}`}>
               {endpoint2.method.toUpperCase()}
             </span>
-            {onSelect && (
-              <button
-                className={styles.selectButton}
-                onClick={() => onSelect(endpoint2)}
-                title="Select this endpoint"
-                aria-label={`Select ${endpoint2.method} ${endpoint2.path}`}
-              >
-                →
-              </button>
-            )}
+            <button
+              className={styles.selectButton}
+              onClick={() => onSelect?.(endpoint2)}
+              title="Select this endpoint"
+              aria-label={`Select ${endpoint2.method} ${endpoint2.path}`}
+            >
+              →
+            </button>
           </div>
         </div>
 

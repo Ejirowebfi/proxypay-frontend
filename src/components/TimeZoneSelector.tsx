@@ -143,9 +143,7 @@ export const TimeZoneSelector: React.FC<TimeZoneSelectorProps> = ({
   const displayName = getTimezoneOffset(selectedTimezone);
 
   const handleSelect = (tz: string) => {
-    if (onTimezoneChange) {
-      onTimezoneChange(tz);
-    }
+    onTimezoneChange?.(tz);
     setIsOpen(false);
   };
 
