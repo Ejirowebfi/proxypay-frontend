@@ -89,6 +89,9 @@ export default function APISidebarNav({
   );
   const [tagSearchQueries, setTagSearchQueries] = useState<Record<string, string>>({});
   const [tagMethodFilters, setTagMethodFilters] = useState<Record<string, Set<string>>>({});
+  const [quickSearchOpen, setQuickSearchOpen] = useState(false);
+  const [quickSearch, setQuickSearch] = useState('');
+  const [quickSearchIndex, setQuickSearchIndex] = useState(0);
 
   /**
    * Group endpoints by tag if not provided
@@ -138,6 +141,40 @@ export default function APISidebarNav({
 
     return unsubscribe;
   }, [enableDeepLinking]);
+
+  const quickSearchResults = useMemo(
+    () => filterEndpointsByQuery(endpoints, quickSearch),
+    [endpoints, quickSearch],
+  );
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setQuickSearchOpen(true);
+      }
+      if (event.key === 'Escape') setQuickSearchOpen(false);
+    };
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+  }, []);
+
+  useEffect(() => setQuickSearchIndex(0), [quickSearch]);
+
+  const handleQuickSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!quickSearchResults.length) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setQuickSearchIndex((index) => (index + 1) % quickSearchResults.length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setQuickSearchIndex((index) => (index - 1 + quickSearchResults.length) % quickSearchResults.length);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      handleEndpointClick(quickSearchResults[quickSearchIndex]);
+      setQuickSearchOpen(false);
+    }
+  };
 
   /**
    * Handle tag expansion toggle
@@ -238,6 +275,36 @@ export default function APISidebarNav({
 
   return (
     <nav className={styles.container}>
+      {quickSearchOpen && (
+        <div className={styles.quickSearchOverlay} role="dialog" aria-label="Quick endpoint search">
+          <div className={styles.quickSearch}>
+            <input
+              autoFocus
+              type="search"
+              placeholder="Search endpoints..."
+              value={quickSearch}
+              onChange={(event) => setQuickSearch(event.target.value)}
+              onKeyDown={handleQuickSearchKeyDown}
+              aria-label="Search endpoints"
+            />
+            <div role="listbox" aria-label="Search results">
+              {quickSearchResults.slice(0, 8).map((endpoint, index) => (
+                <button
+                  key={endpoint.id}
+                  type="button"
+                  role="option"
+                  aria-selected={index === quickSearchIndex}
+                  className={styles.quickSearchResult}
+                  onClick={() => { handleEndpointClick(endpoint); setQuickSearchOpen(false); }}
+                >
+                  <MethodBadge method={endpoint.method} /> {endpoint.path}
+                </button>
+              ))}
+              {!quickSearchResults.length && <span className={styles.quickSearchEmpty}>No endpoints found</span>}
+            </div>
+          </div>
+        </div>
+      )}
       <div className={styles.header}>
         <h3 className={styles.title}>API Endpoints</h3>
         <span className={styles.count}>{endpoints.length}</span>
