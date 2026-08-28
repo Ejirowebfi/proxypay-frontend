@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { sanitizeAnnotationText } from '../utils/sanitize';
 
 interface Annotation {
   id: string;
@@ -124,9 +125,15 @@ export default function AnnotationsPanel(): React.JSX.Element {
   const handleLogin = useCallback(() => {
     const name = usernameInput.trim();
     if (!name) return;
-    setUsername(name);
-    saveUsername(name);
-    showToast(`Logged in as ${name}`);
+    // SECURITY: Sanitize username to prevent stored XSS
+    const sanitizedName = sanitizeAnnotationText(name);
+    if (!sanitizedName) {
+      showToast('Please enter a valid username');
+      return;
+    }
+    setUsername(sanitizedName);
+    saveUsername(sanitizedName);
+    showToast(`Logged in as ${sanitizedName}`);
   }, [usernameInput, showToast]);
 
   const handleLogout = useCallback(() => {
@@ -145,11 +152,18 @@ export default function AnnotationsPanel(): React.JSX.Element {
       return;
     }
 
+    // SECURITY: Sanitize user input to prevent XSS attacks
+    const sanitizedText = sanitizeAnnotationText(annotationText);
+    if (!sanitizedText) {
+      showToast('Please enter valid annotation text');
+      return;
+    }
+
     const newAnnotation: Annotation = {
       id: generateId(),
       endpointPath,
       endpointMethod,
-      text: annotationText.trim(),
+      text: sanitizedText, // Store sanitized text
       type: annotationType,
       author: username,
       timestamp: Date.now(),
