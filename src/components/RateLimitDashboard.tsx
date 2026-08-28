@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { retryWithExponentialBackoff } from '../utils/retryWithExponentialBackoff';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -281,23 +282,29 @@ export default function RateLimitDashboard(): React.JSX.Element {
         }
         setAlerts(newAlerts);
       } else {
-        // Fetch from API
-        const response = await fetch('/api/rate-limit-status', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('api_token')}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch rate limit status');
-        }
+        const response = await retryWithExponentialBackoff(
+          () => fetch('/api/rate-limit-status', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('api_token')}`,
+              'Content-Type': 'application/json',
+            },
+          }).then((result) => {
+            if (!result.ok) throw new Error(`Failed to fetch rate limit status (${result.status})`);
+            return result;
+          }),
+          {
+            maxAttempts: 3,
+            initialDelayMs: 1000,
+            onRetry: (_error, attempt, delayMs) => console.warn(`Rate limit retry ${attempt} in ${delayMs}ms`),
+          }
+        );
 
         const data = (await response.json()) as RateLimitStatus;
         setStatus(data);
         setLastUpdated(Date.now());
       }
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -312,12 +319,12 @@ export default function RateLimitDashboard(): React.JSX.Element {
 
   // Auto-refresh polling
   useEffect(() => {
+                    <button type="button" onClick={fetchStatus} disabled={loading}>Retry</button>
     if (!autoRefresh) return;
 
     const intervalId = setInterval(() => {
       fetchStatus();
     }, POLLING_INTERVAL);
-
     return () => clearInterval(intervalId);
   }, [autoRefresh, fetchStatus]);
 
