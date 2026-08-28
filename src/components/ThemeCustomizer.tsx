@@ -140,6 +140,21 @@ const presetThemes: ThemeDefinition[] = [
   },
 ];
 
+const communityThemes: ThemeDefinition[] = [
+  {
+    id: 'oceanic', name: 'Oceanic', description: 'Cool blue surfaces with a crisp teal accent.',
+    palette: { primary: '#0369a1', secondary: '#0f766e', surface: '#f0f9ff', surfaceAlt: '#ffffff', text: '#0c4a6e', muted: '#475569', border: '#bae6fd' },
+    darkPalette: { primary: '#38bdf8', secondary: '#2dd4bf', surface: '#082f49', surfaceAlt: '#0c4a6e', text: '#f0f9ff', muted: '#bae6fd', border: '#155e75' },
+    fontFamily: 'Source Sans 3, system-ui, sans-serif', headingFontFamily: 'Source Sans 3, system-ui, sans-serif', spacing: 12,
+  },
+  {
+    id: 'sunset', name: 'Sunset', description: 'Warm coral and gold accents for a lively workspace.',
+    palette: { primary: '#c2410c', secondary: '#be123c', surface: '#fff7ed', surfaceAlt: '#ffffff', text: '#431407', muted: '#7c2d12', border: '#fed7aa' },
+    darkPalette: { primary: '#fb923c', secondary: '#fb7185', surface: '#431407', surfaceAlt: '#7c2d12', text: '#fff7ed', muted: '#fed7aa', border: '#9a3412' },
+    fontFamily: 'Manrope, system-ui, sans-serif', headingFontFamily: 'Manrope, system-ui, sans-serif', spacing: 14,
+  },
+];
+
 const defaultCustomTheme: ThemeDefinition = {
   id: 'custom',
   name: 'Custom Theme',
@@ -324,6 +339,14 @@ export default function ThemeCustomizer(): React.JSX.Element {
     setCustomTheme(theme);
   };
 
+  const handleInstallCommunityTheme = (theme: ThemeDefinition) => {
+    const installed = { ...theme, savedAt: new Date().toISOString() } satisfies SavedTheme;
+    const updated = [installed, ...customThemes.filter((item) => item.id !== theme.id)];
+    setCustomThemes(updated);
+    saveStoredTheme(STORAGE_KEYS.customThemes, updated);
+    handlePresetSelect(theme);
+  };
+
   const handleLoadCustomTheme = (theme: SavedTheme) => {
     setPreviewTheme(theme);
     setCustomTheme(theme);
@@ -475,6 +498,20 @@ export default function ThemeCustomizer(): React.JSX.Element {
       </div>
 
       <div className="theme-customizer__grid theme-customizer__grid--wide">
+        <div className="theme-customizer__panel">
+          <h3>Community theme library</h3>
+          <div className="theme-customizer__list">
+            {communityThemes.map((theme) => (
+              <div key={theme.id} className="theme-tile">
+                <strong>{theme.name}</strong>
+                <small>{theme.description}</small>
+                <button className="button button--secondary button--sm" type="button" onClick={() => handleInstallCommunityTheme(theme)}>
+                  Install theme
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
         <div className="theme-customizer__panel">
           <h3>Create a custom theme</h3>
           <label>

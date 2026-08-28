@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import ChangelogViewer, { findMatches, highlightText } from '../ChangelogViewer';
+import ChangelogViewer, { findMatches, highlightText, isValidSemanticVersion } from '../ChangelogViewer';
 
 /**
  * Tests for ChangelogViewer search functionality with highlighting.
@@ -11,6 +11,19 @@ import ChangelogViewer, { findMatches, highlightText } from '../ChangelogViewer'
  * - Both timeline and compact view modes
  */
 describe('ChangelogViewer', () => {
+  describe('semantic version validation', () => {
+    it('accepts valid versions with an optional v prefix and prerelease metadata', () => {
+      expect(isValidSemanticVersion('v2.4.0')).toBe(true);
+      expect(isValidSemanticVersion('1.0.0-beta.1+build.7')).toBe(true);
+    });
+
+    it('rejects versions that do not follow semver', () => {
+      expect(isValidSemanticVersion('version-2.4')).toBe(false);
+      expect(isValidSemanticVersion('v2.4')).toBe(false);
+      expect(isValidSemanticVersion('01.2.3')).toBe(false);
+    });
+  });
+
   describe('findMatches', () => {
     it('finds case-insensitive matches in text', () => {
       const matches = findMatches('Hello World Hello', 'hello');

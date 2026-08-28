@@ -22,6 +22,10 @@ interface HighlightMatch {
   end: number;
 }
 
+export function isValidSemanticVersion(version: string): boolean {
+  return /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(version);
+}
+
 // ── Utility: Search & Highlight ────────────────────────────────────
 /**
  * Finds all case-insensitive matches of searchTerm in text.
@@ -696,6 +700,14 @@ export default function ChangelogViewer(): React.JSX.Element {
                 <div style={styles.entryMeta}>
                   <span style={getTypeBadgeStyle(entry.type)}>{entry.type}</span>
                   <span style={styles.entryVersion}>{entry.version}</span>
+                  {!isValidSemanticVersion(entry.version) && (
+                    <span
+                      role="alert"
+                      style={{ background: '#fef3c7', color: '#92400e', marginLeft: 8, padding: '0.18rem 0.55rem', borderRadius: 5, fontSize: '0.72rem', fontWeight: 600 }}
+                    >
+                      Invalid semantic version
+                    </span>
+                  )}
                   <span style={styles.entryDate}>{entry.date}</span>
                   <span style={getImpactBadgeStyle(entry.impact)}>{entry.impact} impact</span>
                 </div>
