@@ -1,6 +1,7 @@
 /**
  * Integrated API Reference Page with Redoc and Sidebar
  * Combines Redoc viewer with sidebar navigation, comparison view, and enhanced UX
+ * Includes spec version detection and update notifications
  */
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
@@ -8,6 +9,7 @@ import jsYaml from 'js-yaml';
 import RedocViewer from './RedocViewer';
 import APISidebarNav from './APISidebarNav';
 import EndpointComparison from './EndpointComparison';
+import SpecUpdateNotifier from './SpecUpdateNotifier';
 import { parseEndpoints, groupByTag, type OpenAPISpec, type ParsedEndpoint, type TagGroup } from '../utils/apiSpecParser';
 import { parseDeepLink, toEndpointLink } from '../utils/redocDeepLink';
 import {
@@ -230,6 +232,14 @@ export default function IntegratedApiReference({
 
   return (
     <div className={styles.container}>
+      {/* Spec update notifier */}
+      <SpecUpdateNotifier
+        onUpdate={() => {
+          // Reload the page to fetch the latest spec
+          window.location.reload();
+        }}
+      />
+
       {/* Comparison Modal */}
       {comparisonMode && (
         <div className={styles.comparisonModal}>

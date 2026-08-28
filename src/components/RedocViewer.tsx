@@ -1,6 +1,7 @@
 /**
  * Redoc Viewer Component
  * Renders OpenAPI specification using Redoc with deep-linking support and copy link functionality
+ * Includes cache-busting support via version query parameters
  */
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
@@ -12,6 +13,7 @@ import {
   scrollIntoView,
   onHashChange,
 } from '../utils/redocDeepLink';
+import { getSpecUrlWithCacheBusting, checkSpecVersion, updateVersionTracking } from '../utils/specVersionManager';
 import { useToast } from './Toast';
 import Toast from './Toast';
 import { loadRedoc } from '../utils/redocLoader';
@@ -84,6 +86,7 @@ export default function RedocViewer({
 
   /**
    * Load OpenAPI spec from URL or use provided spec
+   * Includes cache-busting query parameter based on spec version
    */
   useEffect(() => {
     if (spec) {
@@ -98,20 +101,33 @@ export default function RedocViewer({
         setLoading(true);
         setError(null);
 
-        const response = await fetch(specUrl);
+        // Add cache-busting query parameter to spec URL
+        const cacheBustedUrl = getSpecUrlWithCacheBusting(specUrl);
+
+        const response = await fetch(cacheBustedUrl);
         if (!response.ok) {
           throw new Error(`Failed to load OpenAPI spec: ${response.statusText}`);
         }
 
         let specData: OpenAPISpec;
+        let specContent: string;
 
         // Handle both JSON and YAML
         const contentType = response.headers.get('content-type') || '';
         if (contentType.includes('yaml')) {
-          const yamlText = await response.text();
-          specData = jsYaml.load(yamlText) as OpenAPISpec;
+          specContent = await response.text();
+          specData = jsYaml.load(specContent) as OpenAPISpec;
         } else {
-          specData = await response.json();
+          specContent = await response.text();
+          specData = JSON.parse(specContent);
+        }
+
+        // Update version tracking after successful load
+        try {
+          updateVersionTracking(specContent);
+        } catch (err) {
+          console.warn('Failed to update version tracking:', err);
+          // Don't fail the spec load if version tracking fails
         }
 
         setLoadedSpec(specData);
