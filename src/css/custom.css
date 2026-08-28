@@ -1281,6 +1281,41 @@ a[target='_blank']::after {
   text-decoration: underline;
 }
 
+.rate-limit-forecast-section {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 8px;
+  background: var(--ifm-background-surface-primary);
+}
+
+.rate-limit-forecast-section h3 {
+  margin: 0 0 0.5rem;
+}
+
+.rate-limit-forecast-summary {
+  margin: 0 0 0.75rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.api-endpoint-status {
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.api-endpoint-status-new { color: #176b3a; background: #e6f6ed; }
+.api-endpoint-status-deprecated { color: #a33a22; background: #fff0eb; }
+.api-endpoint-status-experimental { color: #805b00; background: #fff7d6; }
+.api-endpoint-status-stable { color: #315f91; background: #edf5ff; }
+
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
