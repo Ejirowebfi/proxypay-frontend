@@ -9,6 +9,25 @@
   overflow: hidden;
 }
 
+/* #319 — Navigation error toast */
+.navErrorToast {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 0.45rem 0.75rem;
+  background: #fff3cd;
+  color: #664d03;
+  border: 1px solid #ffda6a;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  animation: fadeInToast 0.2s ease;
+}
+
+@keyframes fadeInToast {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .quickSearchOverlay {
   position: fixed;
   inset: 0;
